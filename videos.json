@@ -1,0 +1,22 @@
+[
+    {
+        "id": 1,
+        "gender": "male",
+        "url": "videos/male/male1.mp4"
+    },
+    {
+        "id": 2,
+        "gender": "male",
+        "url": "videos/male/male2.mp4"
+    },
+    {
+        "id": 3,
+        "gender": "female",
+        "url": "videos/female/female1.mp4"
+    },
+    {
+        "id": 4,
+        "gender": "female",
+        "url": "videos/female/female2.mp4"
+    }
+]
