@@ -1,61 +1,472 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Connect Pro</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CamZey - Live Chat & Video</title>
+  <style>
+    /* Base reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body, html {
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #fff;
+      overflow-x: hidden;
+    }
+    /* Background image with blur effect */
+    .background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('images/background.jpg') center/cover no-repeat;
+      filter: blur(8px);
+      z-index: -1;
+    }
+    /* Header styling */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.5);
+      position: fixed;
+      width: 100%;
+      top: 0;
+      z-index: 10;
+    }
+    header h1 {
+      font-size: 2rem;
+      letter-spacing: 2px;
+    }
+    .menu-icon {
+      cursor: pointer;
+      width: 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 22px;
+    }
+    .menu-icon .line {
+      height: 4px;
+      background: #fff;
+      border-radius: 2px;
+    }
+    /* Navbar styling */
+    nav {
+      position: fixed;
+      top: 70px;
+      left: -250px;
+      width: 250px;
+      height: calc(100% - 70px);
+      background: rgba(0, 0, 0, 0.8);
+      transition: left 0.3s ease;
+      z-index: 9;
+    }
+    nav ul {
+      list-style: none;
+      padding: 20px;
+    }
+    nav ul li {
+      margin: 20px 0;
+    }
+    nav ul li a {
+      text-decoration: none;
+      color: #fff;
+      font-size: 1.2rem;
+      transition: color 0.2s;
+    }
+    nav ul li a:hover {
+      color: #f39c12;
+    }
+    nav.active {
+      left: 0;
+    }
+    /* Main content styling */
+    main {
+      padding: 120px 20px 20px;
+      text-align: center;
+    }
+    .intro h2 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      animation: fadeIn 1s ease-in;
+    }
+    .intro p {
+      font-size: 1.2rem;
+      margin-bottom: 30px;
+      animation: fadeIn 1.5s ease-in;
+    }
+    .form-container {
+      max-width: 400px;
+      margin: 0 auto;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 20px;
+      border-radius: 8px;
+    }
+    .form-container label {
+      display: block;
+      text-align: left;
+      margin: 15px 0 5px;
+    }
+    .form-container select,
+    .form-container input {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 4px;
+    }
+    .form-container button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      width: 100%;
+      border: none;
+      border-radius: 4px;
+      background: #f39c12;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .form-container button:hover {
+      background: #d35400;
+    }
+    /* Loading overlay */
+    #loadingOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s;
+    }
+    #loadingOverlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .spinner {
+      border: 8px solid rgba(255, 255, 255, 0.2);
+      border-top: 8px solid #f39c12;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    /* Video container styling */
+    #videoContainer {
+      display: none;
+      position: relative;
+      text-align: center;
+      margin: 20px auto;
+      max-width: 800px;
+    }
+    #mainVideo {
+      width: 100%;
+      border: 5px solid #f39c12;
+      border-radius: 8px;
+    }
+    #skipBtn {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background: #e74c3c;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    #skipBtn:hover {
+      background: #c0392b;
+    }
+    /* Webcam preview in the corner */
+    #cameraFeed {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      border: 3px solid #f39c12;
+      border-radius: 4px;
+    }
+    /* Premium modal styling */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 30;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: #222;
+      padding: 30px;
+      border-radius: 8px;
+      text-align: center;
+      width: 90%;
+      max-width: 400px;
+      animation: slideDown 0.5s ease;
+    }
+    .modal-content h2 {
+      margin-bottom: 15px;
+    }
+    .modal-content p {
+      margin-bottom: 20px;
+    }
+    .modal-content button {
+      padding: 10px 20px;
+      background: #27ae60;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .close-btn {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideDown {
+      from { transform: translateY(-50px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
 </head>
 <body>
-    <header class="header">
-        <div class="menu-btn" onclick="toggleNav()"><i class="fas fa-bars"></i></div>
-        <h1>Video Connect Pro</h1>
-    </header>
+  <!-- Background -->
+  <div class="background"></div>
 
-    <nav class="nav-menu">
-        <a href="#">Home</a>
-        <a href="#">About</a>
-        <a href="#">Contact</a>
-    </nav>
-
-    <main class="main-content">
-        <h2>Connect With Amazing People</h2>
-        <p class="subline">Meet new friends worldwide</p>
-
-        <div class="gender-selector">
-            <div class="gender-card" onclick="selectGender('male')">
-                <i class="fas fa-male"></i>
-                <p>Male</p>
-            </div>
-            <div class="gender-card" onclick="selectGender('female')">
-                <i class="fas fa-female"></i>
-                <p>Female</p>
-            </div>
-        </div>
-
-        <button class="chat-btn" onclick="startChat()">Chat Now</button>
-
-        <div class="video-container">
-            <video id="main-video" controls></video>
-            <button class="skip-btn" onclick="skipVideo()">Skip</button>
-        </div>
-    </main>
-
-    <div class="premium-modal" id="premiumModal">
-        <div class="modal-content">
-            <h3>Go Premium!</h3>
-            <p>Unlock unlimited connections and exclusive features.</p>
-            <button onclick="showPayment()">Upgrade Now ($9.99/month)</button>
-            <button onclick="closeModal()">Not Now</button>
-        </div>
+  <!-- Header -->
+  <header>
+    <div class="menu-icon" id="menuIcon">
+      <div class="line"></div>
+      <div class="line"></div>
+      <div class="line"></div>
     </div>
+    <h1>CamZey</h1>
+  </header>
 
-    <div class="loading-screen" id="loadingScreen">
-        <div class="loader"></div>
-        <p>Loading...</p>
+  <!-- Navbar -->
+  <nav id="navbar">
+    <ul>
+      <li><a href="#">Home</a></li>
+      <li><a href="#">Features</a></li>
+      <li><a href="#">Support</a></li>
+    </ul>
+  </nav>
+
+  <!-- Main Content -->
+  <main>
+    <div class="intro">
+      <h2>Connect. Chat. Enjoy.</h2>
+      <p>Experience a live video chat with a cool, professional vibe.</p>
     </div>
+    <div class="form-container">
+      <label for="genderSelect">Select Your Gender:</label>
+      <select id="genderSelect">
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+      </select>
+      
+      <label for="ageInput">Your Age:</label>
+      <input type="number" id="ageInput" min="18" max="99" placeholder="Enter your age">
+      
+      <label for="lookingFor">Looking For:</label>
+      <select id="lookingFor">
+        <!-- As per your requirement, male users get female videos and vice versa -->
+        <option value="female">Female</option>
+        <option value="male">Male</option>
+      </select>
+      
+      <button id="chatNowBtn">Chat Now</button>
+    </div>
+  </main>
 
-    <script src="script.js"></script>
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Video Container -->
+  <div id="videoContainer">
+    <video id="mainVideo" controls autoplay></video>
+    <br />
+    <button id="skipBtn">Skip</button>
+    <!-- Webcam preview (simulated chat mate video) -->
+    <video id="cameraFeed" autoplay muted playsinline></video>
+  </div>
+
+  <!-- Premium Modal -->
+  <div id="premiumModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" id="modalClose">&times;</span>
+      <h2>Go Premium!</h2>
+      <p>Unlock unlimited chats and exclusive content.</p>
+      <button id="premiumBtn">Upgrade Now</button>
+      <div id="authForm" style="display: none; margin-top: 20px;">
+        <input type="text" id="username" placeholder="Username" style="width: 100%; padding:10px; margin:5px 0;">
+        <input type="password" id="password" placeholder="Password" style="width: 100%; padding:10px; margin:5px 0;">
+        <button id="loginBtn" style="width: 100%; padding:10px; margin-top:10px;">Login / Signup</button>
+      </div>
+      <div id="paymentSection" style="display: none; margin-top:20px;">
+        <p>Payment Gateway Placeholder</p>
+        <button id="payBtn">Pay Now</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Simulated JSON video data (in production, fetch from a separate JSON file)
+    const videoData = {
+      male: [
+        "https://www.w3schools.com/html/mov_bbb.mp4",
+        "https://www.w3schools.com/html/movie.mp4"
+      ],
+      female: [
+        "https://www.w3schools.com/html/movie.mp4",
+        "https://www.w3schools.com/html/mov_bbb.mp4"
+      ]
+    };
+
+    // Global state
+    let skipCount = 0;
+    let currentGender = "male"; // default user gender
+    let targetGender = "female"; // default target (if male then target female)
+    
+    const menuIcon = document.getElementById("menuIcon");
+    const navbar = document.getElementById("navbar");
+    const chatNowBtn = document.getElementById("chatNowBtn");
+    const loadingOverlay = document.getElementById("loadingOverlay");
+    const videoContainer = document.getElementById("videoContainer");
+    const mainVideo = document.getElementById("mainVideo");
+    const skipBtn = document.getElementById("skipBtn");
+    const premiumModal = document.getElementById("premiumModal");
+    const modalClose = document.getElementById("modalClose");
+    const premiumBtn = document.getElementById("premiumBtn");
+    const authForm = document.getElementById("authForm");
+    const paymentSection = document.getElementById("paymentSection");
+    const loginBtn = document.getElementById("loginBtn");
+    const payBtn = document.getElementById("payBtn");
+    const genderSelect = document.getElementById("genderSelect");
+    const lookingFor = document.getElementById("lookingFor");
+
+    // Toggle navbar on hamburger click
+    menuIcon.addEventListener("click", () => {
+      navbar.classList.toggle("active");
+    });
+
+    // Function to get a random video URL for the target gender
+    function getRandomVideo() {
+      const videos = videoData[targetGender];
+      return videos[Math.floor(Math.random() * videos.length)];
+    }
+
+    // Function to load a video
+    function loadVideo() {
+      const videoUrl = getRandomVideo();
+      mainVideo.src = videoUrl;
+      mainVideo.load();
+      mainVideo.play();
+    }
+
+    // Show loading overlay then start video after 3 seconds
+    chatNowBtn.addEventListener("click", () => {
+      // Set current gender based on selection
+      currentGender = genderSelect.value;
+      // Ensure target gender is the opposite (as per requirement)
+      targetGender = currentGender === "male" ? "female" : "male";
+      
+      // Reset skip counter
+      skipCount = 0;
+      // Hide main form and show loading overlay
+      loadingOverlay.classList.add("active");
+      videoContainer.style.display = "none";
+      setTimeout(() => {
+        loadingOverlay.classList.remove("active");
+        videoContainer.style.display = "block";
+        loadVideo();
+      }, 3000);
+      
+      // Start webcam (if available)
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: true })
+          .then(stream => {
+            const cameraFeed = document.getElementById("cameraFeed");
+            cameraFeed.srcObject = stream;
+          })
+          .catch(err => {
+            console.error("Error accessing webcam: ", err);
+          });
+      }
+    });
+
+    // Skip button logic
+    skipBtn.addEventListener("click", () => {
+      skipCount++;
+      loadingOverlay.classList.add("active");
+      videoContainer.style.display = "none";
+      setTimeout(() => {
+        loadingOverlay.classList.remove("active");
+        videoContainer.style.display = "block";
+        loadVideo();
+      }, 1000); // Shorter loading on skip
+      if (skipCount >= 5) {
+        // Show premium modal if skipped 5 times
+        setTimeout(() => {
+          premiumModal.style.display = "flex";
+        }, 1000);
+      }
+    });
+
+    // Premium modal close
+    modalClose.addEventListener("click", () => {
+      premiumModal.style.display = "none";
+    });
+
+    // Premium button click shows authentication form
+    premiumBtn.addEventListener("click", () => {
+      authForm.style.display = "block";
+    });
+
+    // Simulated login/signup process
+    loginBtn.addEventListener("click", () => {
+      authForm.style.display = "none";
+      paymentSection.style.display = "block";
+    });
+
+    // Simulated payment process
+    payBtn.addEventListener("click", () => {
+      paymentSection.innerHTML = "<p>Payment successful! You are now premium.</p>";
+      setTimeout(() => {
+        premiumModal.style.display = "none";
+      }, 1500);
+    });
+
+    // Optional: Loop video on end
+    mainVideo.addEventListener("ended", () => {
+      loadVideo();
+    });
+  </script>
 </body>
 </html>
